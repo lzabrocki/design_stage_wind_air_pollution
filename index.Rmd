@@ -1,0 +1,30 @@
+---
+title: "Improving the Design Stage of Air Pollution Studies Based On Wind Patterns"
+image: "inputs/3.outputs/graphical_abstract.jpg"
+links:
+  - label: <i id="icons" class="fas fa-envelope big-icon"></i>
+    url: "mailto:leo.zabrocki@gmail.com"
+  - label: <i id="icons" class="fab fa-github big-icon"></i>
+    url: "https://github.com/lzabrocki"
+output:
+  postcards::trestles
+site: distill::distill_website
+---
+
+
+Hello and welcome!
+
+This website gathers all the materials for the paper *Improving the Design Stage of Air Pollution Studies Based On Wind Patterns* by [Léo Zabrocki](https://lzabrocki.github.io/), [Anna Alari](https://scholar.google.com/citations?user=MiFY320AAAAJ&hl=fr) and [Tarik Benmarhnia](https://profiles.ucsd.edu/tarik.benmarhnia).
+
+To illustrate how our approach works, we study the effect of North-East winds on particulate matter concentrations in Paris over the 2008-2018 period. We were not allowed to share weather data from Météo-France so we added some noise to the weather parameters.
+
+The website is structured as follows:
+
+* A PDF version of preprint of the article is accessible through the <span style="color:#0471a6">Article</span>.
+* The <span style="color:#0471a6">Data</span> tab describes the data wrangling procedure. It also contains a detailed exploratory data analysis.
+* The <span style="color:#0471a6">Matching Analysis</span> tab presents all steps to implement the matching procedure, check covariates balance, analyse the matched data and carry out robustness checks.
+* The GitHub directory contains the R codes to reproduce all results of the article.
+
+
+
+
