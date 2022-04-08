@@ -1,0 +1,34 @@
+name: "."
+title: "Improving the Design Stage of Air Pollution Studies Based On Wind Patterns"
+theme: theme.css
+base_url: https://lzabrocki.github.io/design_stage_wind_air_pollution/
+repository_url: https://github.com/lzabrocki/design_stage_wind_air_pollution
+description: |
+  Design Stage Wind Direction-Air Pollution Tutorial
+output_dir: "docs"
+navbar:
+  search: false
+  source_url: true
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "Article"
+    - text: "Data"
+      menu: 
+        - text: "Data Wrangling"
+          href: 1_data_wrangling.html
+        - text: "EDA"
+          href: 2_eda.html
+    - text: "Matching Analysis"
+      menu: 
+        - text: "Matching Procedure"
+          href: 3_matching_procedure.html
+        - text: "Initial Data vs. Matched Data"
+          href: 4_comparing_initial_to_matched_data.html
+        - text: "Covariates Balance"
+          href: 5_checking_covariates_balance.html
+        - text: "Balance Improvement"
+          href: 6_checking_balance_improvement.html
+        - text: "Analysis of Results"
+          href: 7_analyzing_results.html
+output: distill::distill_article
