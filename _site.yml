@@ -13,6 +13,7 @@ navbar:
     - text: "Home"
       href: index.html
     - text: "Article"
+      href: wind_air_pollution_wp.pdf
     - text: "Data"
       menu: 
         - text: "Data Wrangling"

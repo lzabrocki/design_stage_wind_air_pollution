@@ -491,7 +491,7 @@ data_neyman_pm25 %>%
 
 We load non-imputed air pollution data and compute for each pollutant the 0-1 daily lags and leads:
 
-```{r}
+```{r, fig.align = "center"}
 # load non-imputed data
 data_not_imputed <-
   readRDS(here::here("inputs", "1.data", "4.data_for_analysis", "data_pollutants_not_imputed.rds"))
@@ -1051,7 +1051,7 @@ left_join(sampling_variability_pair,
 
 ### Comparison with an Outcome Regression Analysis on Initial Data
 
-Finally, we ran a simple time-stratified regression model on the matching data to see how the results differ with those found in our matched data analysis. We only adjust for calendar indicator and weather covariate measured at time $t$. We load the matching data:
+We ran a simple time-stratified regression model on the matching data to see how the results differ with those found in our matched data analysis. We only adjust for calendar indicator and weather covariate measured at time $t$. We load the matching data:
 
 ```{r}
 # load matching data
@@ -1206,4 +1206,247 @@ data_regression_analysis %>%
     "Upper Bound of the 95% Confidence Interval" = ci_upper_95
   ) %>%
   datatable(.)
+```
+
+
+### Model Dependance
+
+Finally, we evaluate whether the matching procedure helped decrease the model dependence. We run 6 regression models---with different types of covariate adjustements---on the initial and matched data
+
+
+Below is the code for the initial data:
+
+```{r, code_folding="Please show me the code!"}
+data_matching <- data_matching %>%
+  select(
+    date:bank_day_dummy,
+    mean_pm10,
+    temperature_average:wind_speed,
+    temperature_average_lag_1:wind_speed_lag_1,
+    is_treated_lag_1:is_treated
+  ) %>%
+  mutate(year = as.factor(year),
+         temperature_deciles = ntile(temperature_average, 10),
+         temperature_deciles_lag_1 = ntile(temperature_average_lag_1, 10))
+  
+
+data_model_dep_matching <- data_matching %>%
+  nest() %>%
+  mutate(
+    model_1 = map(data, ~ lm(mean_pm10 ~ is_treated, data = .)),
+    model_2 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_3 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_average + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_4 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_average + I(temperature_average ^ 2) + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_5 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_deciles + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_6 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_deciles + rainfall_duration + humidity_average + wind_speed + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_7 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + is_treated_lag_1 + temperature_deciles + temperature_deciles_lag_1 + rainfall_duration + rainfall_duration_lag_1 + humidity_average + humidity_average_lag_1 + wind_speed + wind_speed_lag_1 + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    )
+  )
+
+
+clean_model_output <- function(model_output) {
+  model_output %>%
+    broom::tidy(., conf.int = TRUE) %>% 
+    filter(term == "is_treatedTRUE") %>% 
+    select(estimate, conf.low, conf.high)
+}
+  
+
+data_model_dep_matching <- data_model_dep_matching %>%
+  select(-data) %>%
+  pivot_longer(cols = c(model_1:model_7), names_to = "model", values_to = "model_output") %>%
+  mutate(model_output = map(model_output, ~ clean_model_output(.))) %>%
+  unnest(model_output) %>%
+  mutate_at(vars(estimate:conf.high), ~ ./mean(data_matching$mean_pm10)*100) %>%
+  mutate(dataset = "Initial Data")
+```
+
+
+And the code for the matched data:
+
+```{r, code_folding="Please show me the code!"}
+data_matched <- data_matched %>%
+  select(
+    date:bank_day_dummy,
+    mean_pm10,
+    temperature_average:wind_speed,
+    temperature_average_lag_1:wind_speed_lag_1,
+    is_treated_lag_1:is_treated
+  ) %>%
+  mutate(time = 1:nrow(.),
+         year = as.factor(year),
+         temperature_deciles = ntile(temperature_average, 10),
+         temperature_deciles_lag_1 = ntile(temperature_average_lag_1, 10))
+  
+
+data_model_dep_matched <- data_matched %>%
+  nest() %>%
+  mutate(
+    model_1 = map(data, ~ lm(mean_pm10 ~ is_treated, data = .)),
+    model_2 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_3 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_average + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_4 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_average + I(temperature_average ^ 2) + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_5 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_deciles + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_6 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + temperature_deciles + rainfall_duration + humidity_average + wind_speed + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    ),
+    model_7 = map(
+      data,
+      ~ lm(
+        mean_pm10 ~ is_treated + is_treated_lag_1 + temperature_deciles + temperature_deciles_lag_1 + rainfall_duration + rainfall_duration_lag_1 + humidity_average + humidity_average_lag_1 + wind_speed + wind_speed_lag_1 + weekday + holidays_dummy +
+          bank_day_dummy + month * year,
+        data = .
+      )
+    )
+  )
+
+
+clean_model_output <- function(model_output) {
+  model_output %>%
+    broom::tidy(., conf.int = TRUE) %>% 
+    filter(term == "is_treatedTRUE") %>% 
+    select(estimate, conf.low, conf.high)
+}
+  
+
+data_model_dep_matched <- data_model_dep_matched %>%
+  select(-data) %>%
+  pivot_longer(cols = c(model_1:model_7), names_to = "model", values_to = "model_output") %>%
+  mutate(model_output = map(model_output, ~ clean_model_output(.))) %>%
+  unnest(model_output) %>%
+  mutate_at(vars(estimate:conf.high), ~ ./mean(data_matching$mean_pm10)*100) %>%
+  mutate(dataset = "Matched Data")
+```
+
+
+We displayed the results:
+
+```{r, code_folding="Please show me the code!"}
+data_model_dep_all <- bind_rows(data_model_dep_matching, data_model_dep_matched) %>%
+  arrange(model) %>%
+  mutate(stripe = ifelse((readr::parse_number(model) %% 2) == 0, "Grey", "White")) %>%
+  ungroup() %>%
+  mutate(model = paste("Model", readr::parse_number(model), sep = " "))
+
+# make the graph
+graph_model_dep_all <-
+  ggplot(data_model_dep_all,
+         aes(x = estimate, y = model)) +
+  geom_rect(
+    aes(fill = stripe),
+    ymin = as.numeric(as.factor(data_model_dep_all$model)) - 0.42,
+    ymax = as.numeric(as.factor(data_model_dep_all$model)) + 0.42,
+    xmin = -Inf,
+    xmax = Inf,
+    color = NA,
+    alpha = 0.4
+  ) +
+  geom_vline(xintercept = 0,
+             color = "black",
+             size = 0.3) +
+  geom_pointrange(
+    aes(
+      y = model,
+      x = estimate,
+      xmin = conf.low ,
+      xmax = conf.high
+    ),
+    size = 0.5,
+    colour = my_blue,
+    lwd = 0.8
+  ) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 8)) +
+  facet_wrap( ~ dataset, ncol = 4) +
+  scale_fill_manual(values = c('gray96', "white")) +
+  guides(fill = FALSE) +
+  ylab("") + xlab("Relative Increase in Concentrations (%)") +
+  theme_tufte() 
+
+
+# print the graph
+graph_model_dep_all
+
+# save the graph
+ggsave(
+  graph_model_dep_all,
+  filename = here::here("inputs", "3.outputs", "2.matching_analysis", "graph_model_dep_all.pdf"),
+  width = 18,
+  height = 6,
+  units = "cm",
+  device = cairo_pdf
+)
 ```

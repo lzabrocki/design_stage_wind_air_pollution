@@ -193,7 +193,7 @@ no2_plot <-
     key.header = "",
     key.footer = "",
     resolution = "fine",
-    par.settings = list(fontsize = list(text = 18))
+    par.settings = list(fontsize = list(text = 8))
   )
 
 o3_plot <-
@@ -206,7 +206,7 @@ o3_plot <-
     key.header = "",
     key.footer = "",
     resolution = "fine",
-    par.settings = list(fontsize = list(text = 18))
+    par.settings = list(fontsize = list(text = 8))
   )
 
 pm10_plot <-
@@ -219,7 +219,7 @@ pm10_plot <-
     key.header = "",
     key.footer = "",
     resolution = "fine",
-    par.settings = list(fontsize = list(text = 18))
+    par.settings = list(fontsize = list(text = 8))
   )
 
 pm25_plot <-
@@ -232,14 +232,16 @@ pm25_plot <-
     key.header = "",
     key.footer = "",
     resolution = "fine",
-    par.settings = list(fontsize = list(text = 18))
+    par.settings = list(fontsize = list(text = 8))
   )
 
 # save the graph
-pdf(
-  here::here(  "inputs", "3.outputs", "1.eda", "graph_polar_plots_pollutants.pdf"),
-  width = 15,
-  height = 5
+png(
+  here::here("inputs", "3.outputs", "1.eda", "graph_polar_plots_pollutants.png"),
+  width = 20,
+  height = 10,
+  units = "cm",
+  res = 1000
 )
 print(no2_plot, split = c(1, 1, 4, 1), more = TRUE)
 print(o3_plot, split = c(2, 1, 4, 1), more = TRUE)
@@ -593,7 +595,7 @@ graph_ridgeline_temperature <-
   ggridges::geom_density_ridges2(alpha = 0.4, colour = NA) +
   scale_fill_manual(values = c(my_blue, my_orange)) +
   facet_wrap(~ year) +
-  labs(x = "Average Temperatue (°C)", y = "", fill = "Group:") +
+  labs(x = "Average Temperature (°C)", y = "", fill = "Group:") +
   theme_tufte()
 
 # we print the graph
@@ -605,6 +607,58 @@ ggsave(
   filename = here::here(  "inputs", "3.outputs", "1.eda", "graph_ridgeline_temperature.pdf"),
   width = 30,
   height = 20,
+  units = "cm",
+  device = cairo_pdf
+)
+````
+
+
+```{r, eval = FALSE}
+# make ridgeline plot for temperature 
+# figures for the article
+graph_ridgeline_temperature <-
+  data %>%
+  filter(year %in% c(2008:2010)) %>%
+  mutate(is_treated = ifelse(is_treated == "Treated", "North-East Winds", "Other Wind Directions")) %>%
+  ggplot(., aes(x = temperature_average, y = month, fill = is_treated)) +
+  ggridges::geom_density_ridges2(alpha = 0.4, colour = NA) +
+  scale_fill_manual(values = c(my_orange, my_blue)) +
+  facet_wrap(~ year, nrow = 1) +
+  labs(x = "Average Temperature (°C)", y = "", fill = "Group:") +
+  theme_tufte()
+
+# open polar plot
+img_polar_lot <- png::readPNG(here::here("inputs", "3.outputs", "1.eda", "graph_polar_plots_pollutants.png"))
+
+img_polar_lot <- ggplot() +
+  annotation_custom(
+    grid::rasterGrob(
+      img_polar_lot,
+      width =
+        ggplot2::unit(1, "npc"),
+      height =
+        ggplot2::unit(1, "npc")
+    ),-Inf,
+    Inf,
+    -Inf,
+    Inf
+  )
+
+
+# load patchwork
+library(patchwork)
+
+# combine plots
+
+graph_polar_plots_imbalance_temperature <- img_polar_lot / graph_ridgeline_temperature +
+  plot_annotation(tag_levels = 'A') & theme(plot.tag = element_text(size = 18, face = "bold"))
+
+# save the plots
+ggsave(
+  graph_polar_plots_imbalance_temperature,
+  filename = here::here("inputs", "3.outputs", "1.eda", "graph_polar_plots_imbalance_temperature.pdf"),
+  width = 25,
+  height = 16,
   units = "cm",
   device = cairo_pdf
 )
